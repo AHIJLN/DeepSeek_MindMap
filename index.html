@@ -1,0 +1,2591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindMap</title>
+<!-- 字体 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600;700&family=Sohne:wght@400;500;700&display=swap">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<!-- CodeMirror 用于代码编辑器 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/theme/eclipse.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/mode/markdown/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.3/addon/edit/matchbrackets.min.js"></script>
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<style>
+/* Medium风格的基础样式 */
+:root {
+--font-serif: 'Source Serif Pro', Georgia, serif;
+--font-sans: 'Sohne', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+--color-background: #fff;
+--color-text-primary: #292929;
+--color-text-secondary: #757575;
+--color-accent: #1a8917;
+--color-accent-light: #e8f3e8;
+--color-border: rgba(230, 230, 230, 1);
+--color-header-background: rgba(255, 255, 255, 0.95);
+--shadow-small: 0 2px 10px rgba(0, 0, 0, 0.05);
+--shadow-medium: 0 4px 20px rgba(0, 0, 0, 0.1);
+--highlight-color: #ffeb3b;
+}
+
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+}
+
+body {
+font-family: var(--font-sans);
+color: var(--color-text-primary);
+line-height: 1.6;
+background-color: var(--color-background);
+padding-top: 65px; /* 为固定的头部留出空间 */
+}
+
+/* Medium风格的头部 */
+.site-header {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+height: 65px;
+background-color: var(--color-header-background);
+border-bottom: 1px solid var(--color-border);
+display: flex;
+align-items: center;
+padding: 0 24px;
+z-index: 1000;
+backdrop-filter: saturate(180%) blur(5px);
+}
+
+.logo {
+font-family: var(--font-serif);
+font-size: 28px;
+font-weight: 700;
+margin-right: 24px;
+color: var(--color-text-primary);
+text-decoration: none;
+}
+
+/* Medium风格的导航 */
+.nav {
+display: flex;
+align-items: center;
+padding: 0;
+margin: 0;
+#overflow-x: auto;
+white-space: nowrap;
+gap: 24px;
+width: 100%;
+margin-left: 20px;
+}
+
+.nav-item {
+list-style: none;
+position: relative;
+}
+
+.nav-link {
+font-size: 14px;
+color: var(--color-text-secondary);
+text-decoration: none;
+font-weight: 500;
+padding: 8px 0;
+transition: color 0.2s;
+}
+
+.nav-link:hover {
+color: var(--color-text-primary);
+}
+
+.nav-link.active {
+color: var(--color-text-primary);
+font-weight: 600;
+}
+
+.nav-link.active::after {
+content: '';
+position: absolute;
+bottom: 0;
+left: 0;
+width: 100%;
+height: 1px;
+background-color: var(--color-text-primary);
+}
+
+/* 主内容区域 */
+.container {
+max-width: 1200px;
+margin: 0 auto;
+padding: 40px 24px;
+}
+
+/* Medium风格的卡片 */
+.card {
+background-color: var(--color-background);
+border-radius: 4px;
+border: 1px solid var(--color-border);
+margin-bottom: 24px;
+overflow: hidden;
+}
+
+.card-header {
+padding: 16px 24px;
+border-bottom: 1px solid var(--color-border);
+background-color: rgba(249, 249, 249, 0.8);
+}
+
+.card-title {
+font-family: var(--font-serif);
+font-weight: 700;
+font-size: 20px;
+margin: 0;
+}
+
+.card-body {
+padding: 24px;
+}
+
+/* 表单元素 */
+.form-group {
+margin-bottom: 24px;
+}
+
+.form-label {
+display: block;
+margin-bottom: 8px;
+font-weight: 500;
+color: var(--color-text-primary);
+}
+
+.form-control {
+width: 100%;
+padding: 12px 16px;
+border: 1px solid var(--color-border);
+border-radius: 4px;
+font-family: var(--font-sans);
+font-size: 16px;
+transition: border-color 0.2s;
+}
+
+.form-control:focus {
+outline: none;
+border-color: var(--color-text-secondary);
+}
+
+.form-select {
+width: 100%;
+padding: 12px 16px;
+border: 1px solid var(--color-border);
+border-radius: 4px;
+font-family: var(--font-sans);
+font-size: 16px;
+appearance: none;
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23292929' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+background-repeat: no-repeat;
+background-position: right 12px center;
+background-size: 16px;
+}
+
+/* 按钮样式 */
+.btn {
+display: inline-block;
+padding: 10px 16px;
+border: none;
+border-radius: 4px;
+font-family: var(--font-sans);
+font-size: 14px;
+font-weight: 500;
+cursor: pointer;
+text-align: center;
+text-decoration: none;
+transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-primary {
+background-color: var(--color-accent);
+color: white;
+}
+
+.btn-primary:hover {
+background-color: #0f7b0f;
+}
+
+.btn-secondary {
+background-color: var(--color-accent-light);
+color: var(--color-accent);
+}
+
+.btn-secondary:hover {
+background-color: #d8ebd8;
+}
+
+.btn-outline {
+background-color: transparent;
+color: var(--color-text-secondary);
+border: 1px solid var(--color-border);
+}
+
+.btn-outline:hover {
+background-color: rgba(0, 0, 0, 0.05);
+color: var(--color-text-primary);
+}
+
+.btn-group {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+/* Medium风格的标签页 */
+.tabs {
+display: flex;
+border-bottom: 1px solid var(--color-border);
+margin-bottom: 24px;
+overflow-x: auto;
+}
+
+.tab {
+padding: 12px 16px;
+cursor: pointer;
+color: var(--color-text-secondary);
+position: relative;
+font-size: 14px;
+font-weight: 500;
+white-space: nowrap;
+}
+
+.tab.active {
+color: var(--color-text-primary);
+font-weight: 600;
+}
+
+.tab.active::after {
+content: '';
+position: absolute;
+bottom: -1px;
+left: 0;
+width: 100%;
+height: 1px;
+background-color: var(--color-text-primary);
+}
+
+.tab-content {
+display: none;
+}
+
+.tab-content.active {
+display: block;
+}
+
+/* Progress overlay */
+.progress-overlay {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(255, 255, 255, 0.9);
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+z-index: 2000;
+}
+
+.progress-status {
+font-family: var(--font-sans);
+font-size: 16px;
+color: var(--color-text-secondary);
+margin-top: 24px;
+text-align: center;
+}
+
+.progress-container {
+width: 60%;
+max-width: 400px;
+}
+
+.progress-bar {
+width: 100%;
+height: 4px;
+background-color: var(--color-border);
+border-radius: 2px;
+overflow: hidden;
+margin-top: 16px;
+}
+
+.progress-bar-inner {
+height: 100%;
+background-color: var(--color-accent);
+border-radius: 2px;
+transition: width 0.3s ease;
+}
+
+/* 两栏布局 */
+.split-view {
+display: flex;
+gap: 24px;
+}
+
+.split-view-left {
+flex: 1;
+min-width: 0;
+}
+
+.split-view-right {
+flex: 1;
+min-width: 0;
+}
+
+/* CodeMirror样式 */
+.CodeMirror {
+height: 500px;
+border: 1px solid var(--color-border);
+border-radius: 4px;
+font-family: 'Menlo', monospace;
+font-size: 14px;
+line-height: 1.6;
+}
+
+/* Markdown预览样式 */
+.markdown-preview {
+font-family: var(--font-serif);
+font-size: 18px;
+line-height: 1.8;
+color: var(--color-text-primary);
+padding: 24px;
+border: 1px solid var(--color-border);
+border-radius: 4px;
+background-color: var(--color-background);
+overflow: auto;
+max-height: 500px;
+}
+
+.markdown-preview h1 {
+font-size: 28px;
+margin-bottom: 24px;
+font-weight: 700;
+border-bottom: 1px solid var(--color-border);
+padding-bottom: 8px;
+}
+
+.markdown-preview h2 {
+font-size: 24px;
+margin-top: 32px;
+margin-bottom: 16px;
+font-weight: 700;
+margin-left: 20px;
+}
+
+.markdown-preview h3 {
+font-size: 20px;
+margin-top: 24px;
+margin-bottom: 12px;
+font-weight: 600;
+margin-left: 40px;
+}
+
+.markdown-preview h4 {
+font-size: 18px;
+margin-top: 20px;
+margin-bottom: 8px;
+font-weight: 600;
+margin-left: 60px;
+}
+
+.markdown-preview h5 {
+font-size: 16px;
+margin-top: 16px;
+margin-bottom: 8px;
+font-weight: 600;
+margin-left: 80px;
+}
+
+.markdown-preview h6 {
+font-size: 14px;
+margin-top: 16px;
+margin-bottom: 8px;
+font-weight: 600;
+margin-left: 100px;
+}
+
+/* 预格式化文本 */
+pre {
+background-color: #f9f9f9;
+padding: 16px;
+border-radius: 4px;
+overflow-x: auto;
+font-family: 'Menlo', monospace;
+font-size: 14px;
+line-height: 1.6;
+color: var(--color-text-primary);
+}
+
+/* Mermaid图表容器 */
+.mermaid-container {
+border: 1px solid var(--color-border);
+border-radius: 4px;
+padding: 24px;
+margin-top: 20px;
+background-color: white;
+min-height: 500px;
+overflow: auto;
+}
+
+.mermaid {
+text-align: center;
+}
+
+/* 文件树样式 */
+.file-tree {
+font-family: 'Menlo', monospace;
+font-size: 14px;
+line-height: 1.6;
+margin: 0;
+border: 1px solid var(--color-border);
+border-radius: 4px;
+padding: 16px;
+background-color: #fafafa;
+overflow: auto;
+height: 500px;
+}
+
+.file-tree ul {
+list-style-type: none;
+padding-left: 20px;
+}
+
+.file-tree li {
+position: relative;
+padding: 4px 0;
+}
+
+.file-tree li::before {
+content: '';
+position: absolute;
+left: -15px;
+top: 12px;
+width: 10px;
+height: 1px;
+background-color: var(--color-text-secondary);
+}
+
+.file-tree li::after {
+content: '';
+position: absolute;
+left: -15px;
+top: 0;
+height: 100%;
+width: 1px;
+background-color: var(--color-text-secondary);
+}
+
+.file-tree li:last-child::after {
+height: 12px;
+}
+
+.file-tree .folder {
+color: var(--color-accent);
+font-weight: 600;
+cursor: pointer;
+}
+
+.file-tree .file {
+color: var(--color-text-primary);
+cursor: pointer;
+}
+
+/* 高亮效果 */
+.highlight {
+background-color: var(--highlight-color);
+}
+
+@keyframes highlight-animation {
+0% { background-color: transparent; }
+50% { background-color: var(--highlight-color); }
+100% { background-color: transparent; }
+}
+
+.highlight-animation {
+animation: highlight-animation 1s ease;
+}
+
+/* 状态提示 */
+.alert {
+padding: 16px;
+border-radius: 4px;
+margin-bottom: 24px;
+display: flex;
+align-items: flex-start;
+}
+
+.alert-icon {
+margin-right: 12px;
+font-size: 20px;
+line-height: 1.2;
+}
+
+.alert-success {
+background-color: var(--color-accent-light);
+color: var(--color-accent);
+}
+
+.alert-danger {
+background-color: #fceaea;
+color: #dc3545;
+}
+
+.alert-warning {
+background-color: #fff8e6;
+color: #856404;
+}
+
+/* 辅助类 */
+.d-none {
+display: none !important;
+}
+
+.d-flex {
+display: flex !important;
+}
+
+.justify-between {
+justify-content: space-between !important;
+}
+
+.align-center {
+align-items: center !important;
+}
+
+.fade-in {
+animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+.container {
+padding: 24px 16px;
+}
+
+.nav {
+gap: 16px;
+}
+
+.progress-container {
+width: 80%;
+}
+
+.btn-group {
+flex-direction: column;
+gap: 8px;
+}
+
+.btn {
+width: 100%;
+}
+
+.split-view {
+flex-direction: column;
+}
+}
+</style>
+</head>
+<body>
+<!-- Medium风格的头部 -->
+<header class="site-header">
+<a href="#" class="logo">MindMap</a>
+<nav>
+<ul class="nav">
+<li class="nav-item">
+<a href="#" class="nav-link active" id="mainNavGenerate">创建</a>
+</li>
+<li class="nav-item">
+<a href="#" class="nav-link" id="mainNavResults">结果</a>
+</li>
+<li class="nav-item">
+<a href="#" class="nav-link" id="mainNavSettings">设置</a>
+</li>
+</ul>
+</nav>
+</header>
+
+<!-- 主内容区域 -->
+<div class="container">
+<!-- 创建思维导图区域 -->
+<div id="createSection">
+<div class="card">
+<div class="card-header">
+<h2 class="card-title">创建思维导图</h2>
+</div>
+<div class="card-body">
+<div class="form-group">
+<label for="theme" class="form-label">输入主题</label>
+<input type="text" id="theme" class="form-control" placeholder="输入思维导图的主题，例如：人工智能的未来发展">
+</div>
+<div class="form-group">
+<label for="temperature" class="form-label">创造性程度</label>
+<div class="d-flex align-center" style="gap: 16px;">
+<input type="range" id="temperature" min="0.1" max="1.5" step="0.1" value="1.5" style="flex-grow: 1;">
+<span id="temperatureValue" style="min-width: 36px; text-align: center;">1.5</span>
+</div>
+</div>
+<div class="form-group">
+<label for="maxTokens" class="form-label">最大字节数</label>
+<div class="d-flex align-center" style="gap: 16px;">
+<input type="range" id="maxTokens" min="1000" max="8000" step="100" value="4000" style="flex-grow: 1;">
+<span id="maxTokensValue" style="min-width: 36px; text-align: center;">4000</span>
+</div>
+</div>
+<button id="generateBtn" class="btn btn-primary">生成思维导图</button>
+<div id="statusContainer" class="alert alert-success d-none" style="margin-top: 16px;">
+<div class="alert-icon"><i class="bi bi-check-circle"></i></div>
+<div>思维导图生成成功！</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 结果展示区域 -->
+<div id="resultsSection" class="d-none">
+<div class="tabs">
+<div class="tab active" data-tab="markdown-tab">Markdown与文件树</div>
+<div class="tab" data-tab="mermaid-tab">Mermaid</div>
+</div>
+
+<!-- Markdown标签页 - 左右两栏布局 -->
+<div id="markdown-tab" class="tab-content active">
+<div class="btn-group" style="margin-bottom: 16px;">
+<button id="downloadMdBtn" class="btn btn-primary">
+<i class="bi bi-download"></i> 下载MD
+</button>
+<button id="copyMdBtn" class="btn btn-outline">
+<i class="bi bi-clipboard"></i> 复制
+</button>
+</div>
+
+<div class="split-view">
+<div class="split-view-left">
+<div id="mdCodeMirror"></div>
+</div>
+<div class="split-view-right">
+<div id="fileTreeContent" class="file-tree"></div>
+</div>
+</div>
+</div>
+
+<!-- Mermaid标签页 - 左右两栏布局 -->
+<div id="mermaid-tab" class="tab-content">
+<div class="btn-group" style="margin-bottom: 16px;">
+<button id="downloadMermaidBtn" class="btn btn-primary">
+<i class="bi bi-download"></i> 下载Mermaid
+</button>
+<button id="copyMermaidBtn" class="btn btn-outline">
+<i class="bi bi-clipboard"></i> 复制
+</button>
+</div>
+
+<div class="split-view">
+<div class="split-view-left">
+<div id="mermaidCodeMirror"></div>
+</div>
+<div class="split-view-right">
+<div id="mermaidContent" class="mermaid-container"></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 设置区域 -->
+<div id="settingsSection" class="d-none">
+<div class="card">
+<div class="card-header">
+<h2 class="card-title">API设置</h2>
+</div>
+<div class="card-body">
+<div class="form-group">
+<label for="apiSettingsSelect" class="form-label">API设置方案</label>
+<div class="d-flex" style="gap: 8px;">
+<select id="apiSettingsSelect" class="form-select">
+<option value="new">-- 新建设置方案 --</option>
+</select>
+<button id="saveApiSettingsBtn" class="btn btn-primary">Save</button>
+<button id="deleteApiSettingsBtn" class="btn btn-outline">Del</button>
+</div>
+</div>
+<div class="form-group">
+<label for="apiSettingsName" class="form-label">方案名称</label>
+<input type="text" id="apiSettingsName" class="form-control" placeholder="输入API设置方案名称">
+</div>
+<div class="form-group">
+<label for="apiKey" class="form-label">API Key</label>
+<input type="text" id="apiKey" class="form-control" placeholder="AI API Key">
+</div>
+<div class="form-group">
+<label for="apiEndpoint" class="form-label">API接口地址</label>
+<input type="text" id="apiEndpoint" class="form-control" value="https://ark.cn-beijing.volces.com/api/v3/chat/completions">
+</div>
+<div class="form-group">
+<label for="modelName" class="form-label">模型名称</label>
+<input type="text" id="modelName" class="form-control" value="输入模型名">
+</div>
+<button id="testConnectionBtn" class="btn btn-primary">测试连接</button>
+<div id="apiStatusContainer" class="alert d-none" style="margin-top: 16px;"></div>
+</div>
+</div>
+
+<!-- 离线数据区域 -->
+<div class="card">
+<div class="card-header">
+<h2 class="card-title">离线使用</h2>
+</div>
+<div class="card-body">
+<p style="margin-bottom: 16px;">如果API连接不可用，您可以使用本地编辑功能创建思维导图，或导入示例</p>
+<div class="btn-group">
+<button id="createEmptyBtn" class="btn btn-outline">新建空白思维导图</button>
+<button id="loadExampleBtn" class="btn btn-outline">加载示例思维导图</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 全屏进度条 -->
+<div class="progress-overlay d-none" id="progressOverlay">
+<h3 style="margin-bottom: 16px; color: var(--color-text-primary);">正在生成思维导图</h3>
+<div class="progress-container">
+<div class="progress-bar">
+<div id="progressBarInner" class="progress-bar-inner" style="width: 0%;"></div>
+</div>
+</div>
+<div id="progressStatus" class="progress-status">正在准备请求...</div>
+<div id="streamingPreview" style="margin-top: 20px; max-width: 90%; max-height: 200px; overflow-y: auto; background-color: #f8f8f8; padding: 10px; border: 1px solid #ddd; border-radius: 4px; display: none;">
+</div>
+</div>
+
+<script>
+// 初始化Mermaid - 使用曲线连接
+mermaid.initialize({
+startOnLoad: false,
+theme: 'default',
+securityLevel: 'loose',
+flowchart: {
+curve: 'basis', // 使用曲线连接
+nodeSpacing: 50,
+rankSpacing: 70,
+htmlLabels: true
+}
+});
+
+// DOM元素引用
+const mainNavGenerate = document.getElementById('mainNavGenerate');
+const mainNavResults = document.getElementById('mainNavResults');
+const mainNavSettings = document.getElementById('mainNavSettings');
+
+const createSection = document.getElementById('createSection');
+const resultsSection = document.getElementById('resultsSection');
+const settingsSection = document.getElementById('settingsSection');
+
+// 配置相关
+const apiKeyInput = document.getElementById('apiKey');
+const apiEndpointInput = document.getElementById('apiEndpoint');
+const modelNameInput = document.getElementById('modelName');
+const apiSettingsSelect = document.getElementById('apiSettingsSelect');
+const apiSettingsName = document.getElementById('apiSettingsName');
+const saveApiSettingsBtn = document.getElementById('saveApiSettingsBtn');
+const deleteApiSettingsBtn = document.getElementById('deleteApiSettingsBtn');
+const temperatureInput = document.getElementById('temperature');
+const temperatureValue = document.getElementById('temperatureValue');
+const maxTokensInput = document.getElementById('maxTokens');
+const maxTokensValue = document.getElementById('maxTokensValue');
+const testConnectionBtn = document.getElementById('testConnectionBtn');
+const apiStatusContainer = document.getElementById('apiStatusContainer');
+
+// 离线模式相关
+const createEmptyBtn = document.getElementById('createEmptyBtn');
+const loadExampleBtn = document.getElementById('loadExampleBtn');
+
+// 生成相关
+const themeInput = document.getElementById('theme');
+const generateBtn = document.getElementById('generateBtn');
+const statusContainer = document.getElementById('statusContainer');
+const progressOverlay = document.getElementById('progressOverlay');
+const progressBarInner = document.getElementById('progressBarInner');
+const progressStatus = document.getElementById('progressStatus');
+const streamingPreview = document.getElementById('streamingPreview');
+
+// 代码编辑器相关
+const mdCodeMirrorContainer = document.getElementById('mdCodeMirror');
+const mermaidCodeMirrorContainer = document.getElementById('mermaidCodeMirror');
+let mdEditor; // CodeMirror 实例
+let mermaidEditor; // CodeMirror 实例
+
+// 编辑器和结果相关
+const fileTreeContent = document.getElementById('fileTreeContent');
+const mermaidContent = document.getElementById('mermaidContent');
+
+// 下载和复制按钮
+const downloadMdBtn = document.getElementById('downloadMdBtn');
+const copyMdBtn = document.getElementById('copyMdBtn');
+const downloadMermaidBtn = document.getElementById('downloadMermaidBtn');
+const copyMermaidBtn = document.getElementById('copyMermaidBtn');
+
+// 存储生成的数据
+let generatedData = {
+markdown: '',
+fileTree: '',
+mermaid: '',
+nodes: [], // 用于存储解析后的节点数据，便于生成不同格式
+lineNodeMap: {}, // 存储行号和对应节点的映射
+mermaidLineNodeMap: {} // 存储Mermaid代码行号和对应节点ID的映射
+};
+
+// 应用状态
+let appState = {
+hasResults: false,
+apiAvailable: false,
+currentApiSettingsId: null,
+streaming: false,
+streamedContent: ''
+};
+
+// API设置方案 - 使用localStorage存储
+let apiSettings = [
+    {
+        id: "default",
+        name: "默认设置",
+        apiKey: "",
+        apiEndpoint: "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
+        modelName: "ep-20250218210050-425rf",
+        maxTokens: 4000
+    }
+];
+
+// 示例思维导图
+const exampleMindmap = `# 人工智能技术概览
+
+## 机器学习
+### 监督学习
+#### 分类算法
+##### 决策树
+###### ID3算法
+###### C4.5算法
+##### 支持向量机
+###### 线性SVM
+###### 非线性SVM
+#### 回归算法
+##### 线性回归
+##### 多项式回归
+### 无监督学习
+#### 聚类算法
+##### K-means
+##### 层次聚类
+#### 降维技术
+##### 主成分分析PCA
+##### t-SNE
+### 强化学习
+#### Q-learning
+##### 深度Q网络
+#### 策略梯度法
+##### A3C
+##### PPO
+
+## 深度学习
+### 卷积神经网络 
+#### 图像识别
+##### ResNet
+###### ResNet-50
+###### ResNet-101
+##### EfficientNet
+#### 目标检测
+##### YOLO
+###### YOLOv3
+###### YOLOv5
+##### Faster R-CNN
+### 循环神经网络 
+#### 自然语言处理
+##### LSTM
+###### Bi-LSTM
+##### GRU
+#### 时间序列分析
+##### 股票预测
+##### 天气预测
+### 生成对抗网络 
+#### 图像生成
+##### DCGAN
+##### StyleGAN
+#### 风格迁移
+##### CycleGAN
+##### Pix2Pix
+
+## AI应用领域
+### 计算机视觉
+#### 面部识别
+##### DeepFace
+##### FaceNet
+#### 自动驾驶
+##### 感知系统
+###### 雷达感知
+###### 视觉感知
+##### 决策系统
+### 自然语言处理
+#### 机器翻译
+##### 神经机器翻译
+###### Transformer
+###### BERT
+##### 统计机器翻译
+#### 情感分析
+##### 基于词典
+##### 基于深度学习
+### 决策系统
+#### 推荐系统
+##### 协同过滤
+###### 基于用户
+###### 基于物品
+##### 内容推荐
+#### 自动化决策
+##### 风险评估
+##### 资源优化`;
+
+// 示例Mermaid代码 - 左右布局
+const exampleMermaid = `graph LR
+    %% 左侧（2条分支）
+    S1_1[监督学习] --- Section1[机器学习]
+    S1_2[无监督学习] --- Section1
+    S1_3[强化学习] --- Section1
+    
+    Section1 --- Center[人工智能技术概览]
+    
+    %% 左侧（2条分支）
+    S2_1[卷积神经网络] --- Section2[深度学习]
+    S2_2[循环神经网络] --- Section2
+    S2_3[生成对抗网络] --- Section2
+    
+    Section2 --- Center
+    
+    %% 右侧（1条分支）
+    Center --- Section3[AI应用领域]
+    
+    Section3 --- S3_1[计算机视觉]
+    Section3 --- S3_2[自然语言处理]
+    Section3 --- S3_3[决策系统]`;
+
+// 示例Mermaid代码库 - 基于标准样式
+const standardMermaidTemplates = {
+    // 2分支示例（1左1右）
+    template2: `graph LR
+    %% 左侧（1条分支）
+    S1_1[1.1 子节点A] --- Section1[1. 左侧分支]
+    S1_2[1.2 子节点B] --- Section1
+    
+    Section1 --- Center[中心主题]
+    
+    %% 右侧（1条分支）
+    Center --- Section2[2. 右侧分支]
+    Section2 --- S2_1[2.1 子节点A]
+    Section2 --- S2_2[2.2 子节点B]`,
+
+    // 3分支示例（1左2右）
+    template3: `graph LR
+    %% 左侧（1条分支）
+    S1_1[1.1 子节点A] --- Section1[1. 左侧分支]
+    S1_2[1.2 子节点B] --- Section1
+    
+    Section1 --- Center[中心主题]
+    
+    %% 右侧（2条分支）
+    Center --- Section2[2. 右侧分支]
+    Section2 --- S2_1[2.1 子节点A]
+    Section2 --- S2_2[2.2 子节点B]
+
+    Center --- Section3[3. 右侧分支]
+    Section3 --- S3_1[3.1 子节点A]
+    Section3 --- S3_2[3.2 子节点B]`,
+
+    // 4分支示例（2左2右）
+    template4: `graph LR
+    %% 左侧（2条分支）
+    S1_1[1.1 子节点] --- Section1[1. 左侧分支]
+    S1_2[1.2 子节点] --- Section1
+    Section1 --- Center[中心主题]
+
+    S2_1[2.1 子节点] --- Section2[2. 左侧分支]
+    S2_2[2.2 子节点] --- Section2
+    Section2 --- Center
+
+    %% 右侧（2条分支）
+    Center --- Section3[3. 右侧分支]
+    Section3 --- S3_1[3.1 子节点]
+    Section3 --- S3_2[3.2 子节点]
+
+    Center --- Section4[4. 右侧分支]
+    Section4 --- S4_1[4.1 子节点]
+    Section4 --- S4_2[4.2 子节点]`,
+
+    // 5分支示例（2左3右）
+    template5: `graph LR
+    %% 左侧（2条分支）
+    S1_1[1.1 子节点A] --- Section1[1. 左侧分支]
+    S1_2[1.2 子节点B] --- Section1
+    
+    S2_1[2.1 子节点A] --- Section2[2. 左侧分支]
+    S2_2[2.2 子节点B] --- Section2
+
+    Section1 --- Center[中心主题]
+    Section2 --- Center
+
+    %% 右侧（3条分支）
+    Center --- Section3[3. 右侧分支]
+    Section3 --- S3_1[3.1 子节点A]
+    Section3 --- S3_2[3.2 子节点B]
+
+    Center --- Section4[4. 右侧分支]
+    Section4 --- S4_1[4.1 子节点A]
+    Section4 --- S4_2[4.2 子节点B]
+
+    Center --- Section5[5. 右侧分支]
+    Section5 --- S5_1[5.1 子节点A]
+    Section5 --- S5_2[5.2 子节点B]`,
+
+    // 10分支示例（5左5右）
+    template10: `graph LR
+    %% 左侧（5条分支）
+    S1_1[1.1 子节点] --- Section1[1. 左侧分支]
+    S1_2[1.2 子节点] --- Section1
+    Section1 --- Center[中心主题]
+
+    S2_1[2.1 子节点] --- Section2[2. 左侧分支]
+    S2_2[2.2 子节点] --- Section2
+    Section2 --- Center
+
+    S3_1[3.1 子节点] --- Section3[3. 左侧分支]
+    S3_2[3.2 子节点] --- Section3
+    Section3 --- Center
+
+    S4_1[4.1 子节点] --- Section4[4. 左侧分支]
+    S4_2[4.2 子节点] --- Section4
+    Section4 --- Center
+
+    S5_1[5.1 子节点] --- Section5[5. 左侧分支]
+    S5_2[5.2 子节点] --- Section5
+    Section5 --- Center
+
+    %% 右侧（5条分支）
+    Center --- Section6[6. 右侧分支]
+    Section6 --- S6_1[6.1 子节点]
+    Section6 --- S6_2[6.2 子节点]
+
+    Center --- Section7[7. 右侧分支]
+    Section7 --- S7_1[7.1 子节点]
+    Section7 --- S7_2[7.2 子节点]
+
+    Center --- Section8[8. 右侧分支]
+    Section8 --- S8_1[8.1 子节点]
+    Section8 --- S8_2[8.2 子节点]
+
+    Center --- Section9[9. 右侧分支]
+    Section9 --- S9_1[9.1 子节点]
+    Section9 --- S9_2[9.2 子节点]
+
+    Center --- Section10[10. 右侧分支]
+    Section10 --- S10_1[10.1 子节点]
+    Section10 --- S10_2[10.2 子节点]`
+};
+
+// 使用localStorage进行存储操作
+const safeStorage = {
+    getItem: function(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            console.error('从localStorage获取数据失败:', e);
+            return null;
+        }
+    },
+    setItem: function(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {
+            console.error('保存数据到localStorage失败:', e);
+        }
+    },
+    removeItem: function(key) {
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {
+            console.error('从localStorage删除数据失败:', e);
+        }
+    }
+};
+
+// 初始化CodeMirror编辑器
+function initializeCodeMirrors() {
+    // 初始化Markdown编辑器
+    mdEditor = CodeMirror(mdCodeMirrorContainer, {
+        value: '',
+        mode: 'markdown',
+        theme: 'eclipse',
+        lineNumbers: true,
+        lineWrapping: true,
+        matchBrackets: true,
+        indentUnit: 4,
+        tabSize: 4,
+        viewportMargin: Infinity
+    });
+
+    mdEditor.on('change', function() {
+        const markdown = mdEditor.getValue();
+        
+        // 保存Markdown内容
+        generatedData.markdown = markdown;
+        
+        // 解析节点结构并更新行号到节点映射
+        const parseResult = parseMarkdownToNodes(markdown);
+        generatedData.nodes = parseResult.nodes;
+        generatedData.lineNodeMap = parseResult.lineNodeMap;
+        
+        // 更新文件树
+        generatedData.fileTree = generateFileTree(generatedData.nodes);
+        renderFileTree();
+        
+        // 更新Mermaid代码 - 使用完整递归算法支持多层级
+        generatedData.mermaid = generateMultiLevelMermaidDiagram(generatedData.nodes);
+        if (mermaidEditor) {
+            mermaidEditor.setValue(generatedData.mermaid);
+        }
+    });
+
+    // 监听光标移动事件，高亮对应的文件树节点
+    mdEditor.on('cursorActivity', function() {
+        const cursor = mdEditor.getCursor();
+        const lineNumber = cursor.line + 1; // CodeMirror行号从0开始
+        
+        // 高亮对应的文件树节点
+        highlightFileTreeNodeForLine(lineNumber);
+    });
+
+    // 初始化Mermaid编辑器
+    mermaidEditor = CodeMirror(mermaidCodeMirrorContainer, {
+        value: '',
+        mode: 'javascript',
+        theme: 'eclipse',
+        lineNumbers: true,
+        lineWrapping: true,
+        matchBrackets: true,
+        indentUnit: 4,
+        tabSize: 4,
+        viewportMargin: Infinity
+    });
+
+    mermaidEditor.on('change', function() {
+        // 当用户停止输入0.3秒后渲染图表，避免频繁渲染导致性能问题
+        clearTimeout(this.renderTimeout);
+        this.renderTimeout = setTimeout(() => {
+            // 解析Mermaid代码并建立行号与节点ID的映射
+            const mermaidCode = mermaidEditor.getValue();
+            generatedData.mermaid = mermaidCode;
+            generatedData.mermaidLineNodeMap = parseMermaidCode(mermaidCode);
+            
+            // 渲染Mermaid图表
+            renderMermaidDiagram();
+        }, 300);
+    });
+
+    // 监听光标移动事件，高亮对应的Mermaid节点
+    mermaidEditor.on('cursorActivity', function() {
+        const cursor = mermaidEditor.getCursor();
+        const lineNumber = cursor.line + 1; // CodeMirror行号从0开始
+        
+        // 高亮对应的Mermaid节点
+        highlightMermaidNodeForLine(lineNumber);
+    });
+}
+
+// 加载API设置 - 使用localStorage
+function loadApiSettings() {
+    try {
+        const savedSettings = safeStorage.getItem('apiSettings');
+        if (savedSettings) {
+            apiSettings = JSON.parse(savedSettings);
+        }
+        
+        // 确保至少有一个默认设置
+        if (!apiSettings || apiSettings.length === 0) {
+            apiSettings = [
+                {
+                    id: "default",
+                    name: "默认设置",
+                    apiKey: "",
+                    apiEndpoint: "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
+                    modelName: "ep-20250218210050-425rf",
+                    maxTokens: 4000
+                }
+            ];
+            // 保存默认设置到localStorage
+            safeStorage.setItem('apiSettings', JSON.stringify(apiSettings));
+        }
+        
+        // 更新下拉选择框
+        updateApiSettingsSelect();
+        
+        // 加载第一个设置
+        loadApiSetting(apiSettings[0].id);
+    } catch (error) {
+        console.error('加载API设置时出错:', error);
+        // 使用默认设置
+        apiSettings = [
+            {
+                id: "default",
+                name: "默认设置",
+                apiKey: "",
+                apiEndpoint: "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
+                modelName: "ep-20250218210050-425rf",
+                maxTokens: 4000
+            }
+        ];
+        // 保存默认设置到localStorage
+        safeStorage.setItem('apiSettings', JSON.stringify(apiSettings));
+        updateApiSettingsSelect();
+        loadApiSetting("default");
+    }
+}
+
+// 更新API设置选择下拉框
+function updateApiSettingsSelect() {
+    // 清空现有选项，保留"新建设置方案"选项
+    apiSettingsSelect.innerHTML = '<option value="new">-- 新建设置方案 --</option>';
+    
+    // 添加保存的设置方案
+    apiSettings.forEach(setting => {
+        const option = document.createElement('option');
+        option.value = setting.id;
+        option.textContent = setting.name;
+        apiSettingsSelect.appendChild(option);
+    });
+    
+    // 如果有当前选中的设置方案，设置为选中状态
+    if (appState.currentApiSettingsId) {
+        apiSettingsSelect.value = appState.currentApiSettingsId;
+    }
+}
+
+// 加载指定的API设置
+function loadApiSetting(id) {
+    if (id === 'new') {
+        // 清空表单，准备创建新设置
+        apiSettingsName.value = '';
+        apiKeyInput.value = '';
+        apiEndpointInput.value = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+        modelNameInput.value = 'ep-20250218210050-425rf';
+        maxTokensInput.value = 4000;
+        maxTokensValue.textContent = '4000';
+        appState.currentApiSettingsId = null;
+    } else {
+        // 加载已有设置
+        const setting = apiSettings.find(s => s.id === id);
+        if (setting) {
+            apiSettingsName.value = setting.name;
+            apiKeyInput.value = setting.apiKey || '';
+            apiEndpointInput.value = setting.apiEndpoint || 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+            modelNameInput.value = setting.modelName || 'ep-20250218210050-425rf';
+            maxTokensInput.value = setting.maxTokens || 4000;
+            maxTokensValue.textContent = setting.maxTokens || '4000';
+            appState.currentApiSettingsId = setting.id;
+        }
+    }
+}
+
+// 保存当前API设置 - 使用localStorage
+function saveApiSetting() {
+    const name = apiSettingsName.value.trim();
+    if (!name) {
+        showApiStatus('请输入API设置方案名称', 'warning');
+        return;
+    }
+    
+    const apiKey = apiKeyInput.value.trim();
+    if (!apiKey) {
+        showApiStatus('请输入API密钥', 'warning');
+        return;
+    }
+    
+    const setting = {
+        id: appState.currentApiSettingsId || Date.now().toString(),
+        name: name,
+        apiKey: apiKey,
+        apiEndpoint: apiEndpointInput.value.trim(),
+        modelName: modelNameInput.value.trim(),
+        maxTokens: parseInt(maxTokensInput.value)
+    };
+    
+    // 如果是更新已有设置
+    if (appState.currentApiSettingsId) {
+        const index = apiSettings.findIndex(s => s.id === appState.currentApiSettingsId);
+        if (index !== -1) {
+            apiSettings[index] = setting;
+        }
+    } else {
+        // 新增设置
+        apiSettings.push(setting);
+        appState.currentApiSettingsId = setting.id;
+    }
+    
+    // 保存到localStorage
+    safeStorage.setItem('apiSettings', JSON.stringify(apiSettings));
+    
+    // 更新下拉框
+    updateApiSettingsSelect();
+    
+    showApiStatus('API设置方案已保存', 'success');
+}
+
+// 删除当前API设置 - 使用localStorage
+function deleteApiSetting() {
+    if (!appState.currentApiSettingsId) {
+        showApiStatus('请先选择一个API设置方案', 'warning');
+        return;
+    }
+    
+    // 确认删除
+    if (!confirm(`确定要删除设置方案 "${apiSettingsName.value}" 吗？`)) {
+        return;
+    }
+    
+    // 从数组中删除
+    const index = apiSettings.findIndex(s => s.id === appState.currentApiSettingsId);
+    if (index !== -1) {
+        apiSettings.splice(index, 1);
+        
+        // 保存到localStorage
+        safeStorage.setItem('apiSettings', JSON.stringify(apiSettings));
+        
+        // 更新下拉框
+        appState.currentApiSettingsId = null;
+        updateApiSettingsSelect();
+        
+        // 如果还有其他设置，加载第一个
+        if (apiSettings.length > 0) {
+            loadApiSetting(apiSettings[0].id);
+        } else {
+            // 清空表单
+            apiSettingsName.value = '';
+            apiKeyInput.value = '';
+        }
+        
+        showApiStatus('API设置方案已删除', 'success');
+    }
+}
+
+// 主导航切换
+mainNavGenerate.addEventListener('click', function(e) {
+    e.preventDefault();
+    setActiveNav(this);
+    createSection.classList.remove('d-none');
+    resultsSection.classList.add('d-none');
+    settingsSection.classList.add('d-none');
+});
+
+mainNavResults.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (appState.hasResults) {
+        setActiveNav(this);
+        createSection.classList.add('d-none');
+        resultsSection.classList.remove('d-none');
+        settingsSection.classList.add('d-none');
+        
+        // 确保激活标签页中的内容正确显示
+        const activeTab = document.querySelector('.tab.active');
+        if (activeTab) {
+            const tabId = activeTab.getAttribute('data-tab');
+            if (tabId === 'markdown-tab') {
+                // 刷新CodeMirror编辑器
+                if (mdEditor) mdEditor.refresh();
+            } else if (tabId === 'mermaid-tab') {
+                // 刷新Mermaid图表
+                if (mermaidEditor) mermaidEditor.refresh();
+                renderMermaidDiagram();
+            }
+        }
+    } else {
+        showAlert('请先生成思维导图', 'warning');
+    }
+});
+
+mainNavSettings.addEventListener('click', function(e) {
+    e.preventDefault();
+    setActiveNav(this);
+    createSection.classList.add('d-none');
+    resultsSection.classList.add('d-none');
+    settingsSection.classList.remove('d-none');
+});
+
+function setActiveNav(element) {
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    element.classList.add('active');
+}
+
+// 标签页切换
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        const tabId = this.getAttribute('data-tab');
+
+        // 激活选项卡
+        document.querySelectorAll('.tab').forEach(t => {
+            t.classList.remove('active');
+        });
+        this.classList.add('active');
+
+        // 显示对应内容
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(tabId).classList.add('active');
+
+        // 如果是Mermaid标签页，渲染Mermaid图表
+        if (tabId === 'mermaid-tab') {
+            renderMermaidDiagram();
+        }
+
+        // 刷新CodeMirror编辑器显示
+        if (mdEditor) mdEditor.refresh();
+        if (mermaidEditor) mermaidEditor.refresh();
+    });
+});
+
+// 更新温度值显示
+temperatureInput.addEventListener('input', function() {
+    temperatureValue.textContent = this.value;
+});
+
+// 更新最大字节数显示
+maxTokensInput.addEventListener('input', function() {
+    maxTokensValue.textContent = this.value;
+});
+
+// API设置选择变化时
+apiSettingsSelect.addEventListener('change', function() {
+    loadApiSetting(this.value);
+});
+
+// 保存API设置
+saveApiSettingsBtn.addEventListener('click', saveApiSetting);
+
+// 删除API设置
+deleteApiSettingsBtn.addEventListener('click', deleteApiSetting);
+
+// 高亮文件树中对应行号的节点
+function highlightFileTreeNodeForLine(lineNumber) {
+    // 移除之前的高亮
+    const previousHighlighted = fileTreeContent.querySelectorAll('.highlight-animation');
+    previousHighlighted.forEach(el => {
+        el.classList.remove('highlight-animation');
+    });
+    
+    // 获取对应的节点内容
+    const nodeContent = generatedData.lineNodeMap[lineNumber];
+    if (!nodeContent) return;
+    
+    // 查找并高亮对应的文件树节点
+    const fileTreeNodes = fileTreeContent.querySelectorAll('.folder, .file');
+    fileTreeNodes.forEach(node => {
+        if (node.textContent === nodeContent) {
+            node.classList.add('highlight-animation');
+            
+            // 确保节点在视野中
+            node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+}
+
+// 高亮Mermaid图表中对应行号的节点
+function highlightMermaidNodeForLine(lineNumber) {
+    // 获取对应的节点ID
+    const nodeId = generatedData.mermaidLineNodeMap[lineNumber];
+    if (!nodeId) return;
+    
+    // 查找SVG容器
+    const svgContainer = mermaidContent.querySelector('svg');
+    if (!svgContainer) return;
+    
+    // 查找所有可能匹配的节点
+    let nodeElements = Array.from(svgContainer.querySelectorAll('g[id*="' + nodeId + '"]'));
+    
+    // 如果没有找到匹配的节点，尝试使用不同的选择器
+    if (nodeElements.length === 0) {
+        // 有时候Mermaid使用不同的ID格式
+        nodeElements = Array.from(svgContainer.querySelectorAll(`[id$="${nodeId}"]`));
+    }
+    
+    if (nodeElements.length === 0) {
+        // 尝试直接通过文本内容查找
+        const allNodes = Array.from(svgContainer.querySelectorAll('g'));
+        nodeElements = allNodes.filter(node => {
+            const textElements = node.querySelectorAll('text');
+            return Array.from(textElements).some(textEl => {
+                return textEl.textContent.includes(nodeId);
+            });
+        });
+    }
+    
+    if (nodeElements.length === 0) return;
+    
+    // 高亮第一个匹配的节点
+    const targetElement = nodeElements[0];
+    
+    // 找到节点内的所有可高亮元素
+    let shapes = targetElement.querySelectorAll('rect, circle, polygon, ellipse, path');
+    if (shapes.length === 0) {
+        shapes = [targetElement]; // 如果没有找到形状元素，使用节点本身
+    }
+    
+    // 应用高亮动画
+    Array.from(shapes).forEach(shape => {
+        // 记录原始属性
+        const originalFill = shape.getAttribute('fill') || 'none';
+        const originalStroke = shape.getAttribute('stroke') || 'none';
+        
+        // 应用高亮样式
+        shape.setAttribute('fill', '#ffeb3b');
+        shape.setAttribute('stroke', '#ff9800');
+        shape.setAttribute('stroke-width', '2');
+        
+        // 添加过渡效果
+        shape.style.transition = 'fill 0.3s, stroke 0.3s';
+        
+        // 800ms后恢复原样
+        setTimeout(() => {
+            shape.setAttribute('fill', originalFill);
+            shape.setAttribute('stroke', originalStroke);
+            shape.removeAttribute('stroke-width');
+        }, 800);
+    });
+    
+    // 滚动到节点位置
+    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// 测试API连接
+testConnectionBtn.addEventListener('click', async function() {
+    const apiKey = apiKeyInput.value.trim();
+
+    if (!apiKey) {
+        showApiStatus('请输入API密钥', 'warning');
+        return;
+    }
+
+    testConnectionBtn.disabled = true;
+    showApiStatus('正在测试连接...', 'warning');
+
+    try {
+        // 发送简单的测试请求
+        const response = await fetch(apiEndpointInput.value, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: modelNameInput.value,
+                messages: [
+                    { role: 'user', content: '你好' }
+                ],
+                max_tokens: 10
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`API错误: ${errorData.error?.message || response.statusText}`);
+        }
+
+        // 测试成功
+        appState.apiAvailable = true;
+        showApiStatus('API连接成功！', 'success');
+
+    } catch (error) {
+        console.error('API测试错误:', error);
+        appState.apiAvailable = false;
+        showApiStatus(`API连接失败: ${error.message}`, 'danger');
+    } finally {
+        testConnectionBtn.disabled = false;
+    }
+});
+
+// 显示API状态信息
+function showApiStatus(message, type) {
+    apiStatusContainer.className = 'alert';
+
+    let icon = '';
+    if (type === 'success') {
+        apiStatusContainer.classList.add('alert-success');
+        icon = '<i class="bi bi-check-circle"></i>';
+    } else if (type === 'danger') {
+        apiStatusContainer.classList.add('alert-danger');
+        icon = '<i class="bi bi-x-circle"></i>';
+    } else if (type === 'warning') {
+        apiStatusContainer.classList.add('alert-warning');
+        icon = '<i class="bi bi-exclamation-triangle"></i>';
+    }
+
+    apiStatusContainer.innerHTML = `
+        <div class="alert-icon">${icon}</div>
+        <div>${message}</div>
+    `;
+
+    apiStatusContainer.classList.remove('d-none');
+}
+
+// 离线模式 - 创建空白思维导图
+createEmptyBtn.addEventListener('click', function() {
+    const emptyMindmap = `# 新思维导图
+
+## 主题1
+### 子主题1.1
+#### 子主题1.1.1
+##### 子主题1.1.1.1
+###### 子主题1.1.1.1.1
+####### 子主题1.1.1.1.1.1
+######## 子主题1.1.1.1.1.1.1
+######### 子主题1.1.1.1.1.1.1.1
+########## 子主题1.1.1.1.1.1.1.1.1
+### 子主题1.2
+#### 子主题1.2.1
+
+## 主题2
+### 子主题2.1
+#### 子主题2.1.1
+##### 子主题2.1.1.1
+###### 子主题2.1.1.1.1
+####### 子主题2.1.1.1.1.1
+######## 子主题2.1.1.1.1.1.1
+######### 子主题2.1.1.1.1.1.1.1
+########## 子主题2.1.1.1.1.1.1.1.1
+### 子主题2.2
+#### 子主题2.2.1
+
+## 主题3
+### 子主题3.1
+#### 子主题3.1.1
+### 子主题3.2
+#### 子主题3.2.1`;
+
+    processMindmapData(emptyMindmap);
+    showAlert('已创建空白思维导图，您可以开始编辑', 'success');
+    setActiveNav(mainNavResults);
+    createSection.classList.add('d-none');
+    resultsSection.classList.remove('d-none');
+    settingsSection.classList.add('d-none');
+    
+    // 确保编辑器内容正确显示
+    if (mdEditor) mdEditor.refresh();
+});
+
+// 离线模式 - 加载示例思维导图
+loadExampleBtn.addEventListener('click', function() {
+    processMindmapData(exampleMindmap);
+    showAlert('示例思维导图已加载', 'success');
+    setActiveNav(mainNavResults);
+    createSection.classList.add('d-none');
+    resultsSection.classList.remove('d-none');
+    settingsSection.classList.add('d-none');
+    
+    // 确保编辑器内容正确显示
+    if (mdEditor) mdEditor.refresh();
+});
+
+// 生成思维导图
+generateBtn.addEventListener('click', async function() {
+    // 验证输入
+    if (!themeInput.value.trim()) {
+        showAlert('请输入思维导图主题', 'danger');
+        return;
+    }
+
+    // 检查API是否已验证可用
+    if (!appState.apiAvailable && !apiKeyInput.value.trim()) {
+        showAlert('API密钥未设置或连接未验证，请先在设置页配置API', 'warning');
+        setActiveNav(mainNavSettings);
+        createSection.classList.add('d-none');
+        resultsSection.classList.add('d-none');
+        settingsSection.classList.remove('d-none');
+        return;
+    }
+
+    // 显示全屏进度条
+    progressOverlay.classList.remove('d-none');
+    updateProgress(5, '正在准备请求...');
+
+    // 显示流式预览区
+    streamingPreview.style.display = 'block';
+    streamingPreview.innerHTML = '<div>准备接收内容...</div>';
+
+    // 重置流式内容
+    appState.streamedContent = '';
+    appState.streaming = true;
+
+    generateBtn.disabled = true;
+
+    try {
+        // 更新进度
+        updateProgress(10, '正在准备请求...');
+
+        // 离线模式 - 当API不可用或用户明确选择使用示例时
+        if (!appState.apiAvailable && !apiKeyInput.value.trim()) {
+            // 模拟延迟以提供更好的用户体验
+            updateProgress(30, '正在生成内容...');
+            await new Promise(resolve => setTimeout(resolve, 800));
+            updateProgress(60, '正在处理数据...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // 根据主题修改示例数据
+            let customizedExample = exampleMindmap.replace('人工智能技术概览', themeInput.value);
+
+            // 处理思维导图数据
+            processMindmapData(customizedExample);
+
+            updateProgress(100, '完成!');
+
+            // 延迟隐藏进度条
+            setTimeout(() => {
+                progressOverlay.classList.add('d-none');
+                generateBtn.disabled = false;
+                streamingPreview.style.display = 'none';
+            }, 1000);
+
+            // 导航到结果页面
+            setActiveNav(mainNavResults);
+            createSection.classList.add('d-none');
+            resultsSection.classList.remove('d-none');
+            settingsSection.classList.add('d-none');
+            
+            // 确保编辑器内容正确显示
+            if (mdEditor) mdEditor.refresh();
+
+            return;
+        }
+
+        // 构建提示词
+        const prompt = `请根据「${themeInput.value}」，要求遵守MECE原则，并且深度要4级的，生成一个MD格式的思维导图`;
+
+        // 更新进度
+        updateProgress(20, '正在发送API请求...');
+
+        // 准备API请求配置
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKeyInput.value.trim()}`
+            },
+            body: JSON.stringify({
+                model: modelNameInput.value,
+                messages: [
+                    { role: 'user', content: prompt }
+                ],
+                temperature: parseFloat(temperatureInput.value),
+                max_tokens: parseInt(maxTokensInput.value),
+                stream: true // 启用流式传输
+            })
+        };
+
+        console.log("正在发送请求到:", apiEndpointInput.value);
+
+        // 使用Fetch流式API
+        await handleFetchStreamRequest(apiEndpointInput.value, requestOptions);
+
+        // 更新进度
+        updateProgress(100, '完成!');
+
+        // 延迟隐藏进度条
+        setTimeout(() => {
+            progressOverlay.classList.add('d-none');
+            generateBtn.disabled = false;
+            streamingPreview.style.display = 'none';
+        }, 1000);
+
+        // 导航到结果页面
+        setActiveNav(mainNavResults);
+        createSection.classList.add('d-none');
+        resultsSection.classList.remove('d-none');
+        settingsSection.classList.add('d-none');
+        
+        // 确保编辑器内容正确显示
+        if (mdEditor) mdEditor.refresh();
+
+    } catch (error) {
+        console.error('生成思维导图时出错:', error);
+        showAlert(`生成思维导图时出错: ${error.message}`, 'danger');
+
+        // 错误时隐藏进度条和预览区
+        progressOverlay.classList.add('d-none');
+        streamingPreview.style.display = 'none';
+        generateBtn.disabled = false;
+        appState.streaming = false;
+
+        // 如果是API密钥相关错误，建议用户更新密钥
+        if (error.message.includes('API key') || error.message.includes('无效') ||
+            error.message.includes('invalid') || error.message.includes('missing') ||
+            error.message.includes('Unauthorized')) {
+            showAlert('API密钥无效或过期，请更新您的API密钥', 'warning');
+            setTimeout(() => {
+                setActiveNav(mainNavSettings);
+                createSection.classList.add('d-none');
+                resultsSection.classList.add('d-none');
+                settingsSection.classList.remove('d-none');
+            }, 2000);
+        }
+    }
+});
+
+// 处理Fetch流式请求
+async function handleFetchStreamRequest(url, options) {
+    try {
+        // 发送请求获取响应
+        const response = await fetch(url, options);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorMessage;
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.error?.message || `状态码: ${response.status}`;
+            } catch (e) {
+                errorMessage = `API错误: ${response.status} ${response.statusText}`;
+            }
+            throw new Error(errorMessage);
+        }
+        
+        // 确保响应是可读流
+        if (!response.body) {
+            throw new Error('浏览器不支持流式响应');
+        }
+        
+        // 获取响应流
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        
+        // 进度计数
+        let receivedLength = 0;
+        let progressUpdateCounter = 0;
+        
+        // 处理流式响应
+        let fullContent = '';
+        let currentChunk = '';
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            
+            // 如果流结束，退出循环
+            if (done) {
+                break;
+            }
+            
+            // 解码二进制数据
+            const chunkText = decoder.decode(value, { stream: true });
+            
+            try {
+                // 对于流式API，每个chunk可能包含多个JSON对象，每行一个
+                const lines = chunkText.trim().split('\n');
+                
+                for (const line of lines) {
+                    if (line.trim() === '') continue;
+                    
+                    // 移除"data: "前缀，然后解析JSON
+                    const jsonStr = line.replace(/^data: /, '').trim();
+                    
+                    // 跳过[DONE]消息
+                    if (jsonStr === '[DONE]') continue;
+                    
+                    // 解析JSON数据
+                    try {
+                        const data = JSON.parse(jsonStr);
+                        
+                        // 提取内容
+                        if (data.choices && data.choices[0]) {
+                            const delta = data.choices[0].delta;
+                            
+                            if (delta && delta.content) {
+                                currentChunk += delta.content;
+                                fullContent += delta.content;
+                                
+                                // 实时更新预览
+                                if (progressUpdateCounter % 3 === 0) { // 减少更新频率以提高性能
+                                    streamingPreview.innerHTML = `<div>${escapeHtml(fullContent)}</div>`;
+                                    streamingPreview.scrollTop = streamingPreview.scrollHeight;
+                                    
+                                    // 更新编辑器内容和文件树
+                                    updateStreamingContent(fullContent);
+                                }
+                            }
+                        }
+                    } catch (jsonError) {
+                        console.warn('解析JSON失败:', jsonError, 'Line:', jsonStr);
+                        // 继续处理下一行
+                    }
+                }
+                
+                // 更新接收长度和进度
+                receivedLength += value.length;
+                progressUpdateCounter++;
+                
+                // 更新进度条，进度从20%到90%，流式处理期间
+                const progress = 20 + Math.min(70, (receivedLength / 10000) * 70);
+                updateProgress(progress, '正在接收流式数据...');
+                
+            } catch (parseError) {
+                console.error('处理流数据出错:', parseError);
+                // 处理错误，但继续接收数据
+            }
+        }
+        
+        // 确保最后一次完整更新
+        if (fullContent) {
+            // 最终更新预览
+            streamingPreview.innerHTML = `<div>${escapeHtml(fullContent)}</div>`;
+            
+            // 最终更新编辑器内容和文件树
+            updateStreamingContent(fullContent);
+            
+            // 保存完整内容
+            appState.streamedContent = fullContent;
+            
+            // 完整处理所有内容
+            processMindmapData(fullContent);
+        }
+        
+        // 更新进度
+        updateProgress(90, '处理完整响应...');
+        appState.streaming = false;
+        
+    } catch (error) {
+        appState.streaming = false;
+        console.error('Fetch流处理错误:', error);
+        throw error;
+    }
+}
+
+// 处理SSE数据行
+function processSseData(line, fullContent) {
+    if (line.startsWith('data: ')) {
+        try {
+            const jsonStr = line.substring(6);
+            if (jsonStr === '[DONE]') return;
+            
+            const data = JSON.parse(jsonStr);
+            if (data.choices && data.choices[0] && data.choices[0].delta) {
+                const content = data.choices[0].delta.content || '';
+                if (content) {
+                    fullContent += content;
+                    return fullContent;
+                }
+            }
+        } catch (e) {
+            console.warn('处理SSE数据行出错:', e);
+        }
+    }
+    return fullContent;
+}
+
+// 实时更新流式内容到编辑器和文件树
+function updateStreamingContent(content) {
+    if (!appState.streaming) return;
+
+    // 只对包含Markdown标题的内容进行处理
+    if (content.includes('#')) {
+        // 1. 更新编辑器
+        if (mdEditor) {
+            mdEditor.setValue(content);
+            mdEditor.refresh();
+        }
+
+        try {
+            // 2. 解析节点并创建文件树
+            const parseResult = parseMarkdownToNodes(content);
+            generatedData.nodes = parseResult.nodes;
+            generatedData.lineNodeMap = parseResult.lineNodeMap;
+            
+            // 3. 更新文件树
+            generatedData.fileTree = generateFileTree(generatedData.nodes);
+            renderFileTree();
+            
+            // 4. 更新Mermaid代码 - 使用支持多级的生成算法
+            generatedData.mermaid = generateMultiLevelMermaidDiagram(generatedData.nodes);
+            if (mermaidEditor) {
+                mermaidEditor.setValue(generatedData.mermaid);
+            }
+        } catch (e) {
+            console.warn('实时更新流式内容时出错:', e);
+            // 出错时继续接收数据，不中断流程
+        }
+    }
+}
+
+// 处理思维导图数据
+function processMindmapData(markdown) {
+    // 保存Markdown并填充编辑器
+    generatedData.markdown = markdown;
+    if (mdEditor) {
+        mdEditor.setValue(markdown);
+        mdEditor.refresh(); // 确保内容正确显示
+    }
+    
+    // 解析节点结构并更新行号到节点映射
+    const parseResult = parseMarkdownToNodes(markdown);
+    generatedData.nodes = parseResult.nodes;
+    generatedData.lineNodeMap = parseResult.lineNodeMap;
+    
+    // 生成并保存文件树
+    generatedData.fileTree = generateFileTree(generatedData.nodes);
+    renderFileTree();
+    
+    // 生成并保存Mermaid代码 - 使用支持多级的生成算法
+    generatedData.mermaid = generateMultiLevelMermaidDiagram(generatedData.nodes);
+    if (mermaidEditor) {
+        mermaidEditor.setValue(generatedData.mermaid);
+        mermaidEditor.refresh(); // 确保内容正确显示
+    }
+    
+    // 解析Mermaid代码行号与节点ID映射
+    generatedData.mermaidLineNodeMap = parseMermaidCode(generatedData.mermaid);
+    
+    // 立即渲染Mermaid图表
+    renderMermaidDiagram();
+    
+    // 设置应用状态
+    appState.hasResults = true;
+}
+
+// 更新进度条
+function updateProgress(percent, message) {
+    progressBarInner.style.width = `${percent}%`;
+    progressStatus.textContent = message || '';
+}
+
+// 显示提示信息
+function showAlert(message, type) {
+    statusContainer.className = 'alert';
+
+    let icon = '';
+    if (type === 'success') {
+        statusContainer.classList.add('alert-success');
+        icon = '<i class="bi bi-check-circle"></i>';
+    } else if (type === 'danger') {
+        statusContainer.classList.add('alert-danger');
+        icon = '<i class="bi bi-x-circle"></i>';
+    } else if (type === 'warning') {
+        statusContainer.classList.add('alert-warning');
+        icon = '<i class="bi bi-exclamation-triangle"></i>';
+    }
+
+    statusContainer.innerHTML = `
+        <div class="alert-icon">${icon}</div>
+        <div>${message}</div>
+    `;
+
+    statusContainer.classList.remove('d-none');
+
+    // 如果是成功或错误消息，设置定时器3秒后隐藏
+    if (type === 'success' || type === 'danger' || type === 'warning') {
+        setTimeout(() => {
+            statusContainer.classList.add('d-none');
+        }, 3000);
+    }
+}
+
+// 渲染Mermaid图表
+function renderMermaidDiagram() {
+    try {
+        // 获取最新的Mermaid代码
+        const mermaidCode = mermaidEditor ? mermaidEditor.getValue() : generatedData.mermaid;
+        
+        // 清空之前的内容
+        mermaidContent.innerHTML = '';
+        
+        // 如果没有mermaid内容，不执行渲染
+        if (!mermaidCode) {
+            mermaidContent.innerHTML = '<div class="alert alert-warning">没有可用的Mermaid内容</div>';
+            return;
+        }
+        
+        // 创建新的div并添加mermaid类
+        const mermaidDiv = document.createElement('div');
+        mermaidDiv.className = 'mermaid';
+        mermaidDiv.textContent = mermaidCode;
+        
+        // 添加到容器
+        mermaidContent.appendChild(mermaidDiv);
+        
+        // 重新初始化mermaid
+        mermaid.init(undefined, '.mermaid');
+    } catch (error) {
+        console.error('Mermaid渲染错误:', error);
+        mermaidContent.innerHTML = `<div class="alert alert-danger">Mermaid图表渲染失败: ${error.message}</div>`;
+    }
+}
+
+// 解析Mermaid代码，建立行号与节点ID的映射关系
+function parseMermaidCode(mermaidCode) {
+    const lineNodeMap = {};
+    const lines = mermaidCode.split('\n');
+    
+    // 节点定义行: 如 A[内容] 或 node_0("内容")
+    const nodeDefRegex = /^\s*(\w+)[\s]*(\[|\(|\{|\>)/;
+    
+    // 连接线定义行: 如 A --- B 或 node_0 --- node_1
+    const edgeDefRegex = /^\s*(\w+)[\s]*(---|-->|==>|~~>|->)/;
+    
+    lines.forEach((line, index) => {
+        // 解析节点定义行
+        const nodeMatch = line.match(nodeDefRegex);
+        if (nodeMatch) {
+            const nodeId = nodeMatch[1];
+            lineNodeMap[index + 1] = nodeId;
+            return;
+        }
+        
+        // 解析连接线定义行
+        const edgeMatch = line.match(edgeDefRegex);
+        if (edgeMatch) {
+            const sourceNodeId = edgeMatch[1];
+            lineNodeMap[index + 1] = sourceNodeId;
+            
+            // 尝试提取目标节点ID
+            const targetMatch = line.match(/(---|-->|==>|~~>|->)[\s]*(\w+)/);
+            if (targetMatch && targetMatch[2]) {
+                // 这里我们关联的是源节点，但也可以设置为目标节点或两者
+                lineNodeMap[index + 1] = sourceNodeId;
+            }
+        }
+    });
+    
+    return lineNodeMap;
+}
+
+// 完全解析Markdown到节点结构 - 支持任意级别的标题 (# - ######)，并创建完整的层次结构
+function parseMarkdownToNodes(markdown) {
+    // 解析Markdown标题
+    const lines = markdown.split('\n');
+    const nodes = [];
+    const lineNodeMap = {}; // 行号到节点内容的映射
+    
+    // 提取标题节点 - 支持任意级别的标题 (# - ##########)
+    for (let i = 0; i < lines.length; i++) {
+        const lineNumber = i + 1; // 行号从1开始
+        const trimmedLine = lines[i].trim();
+        
+        if (trimmedLine.startsWith('#')) {
+            // 计算标题级别
+            let level = 0;
+            for (const char of trimmedLine) {
+                if (char === '#') {
+                    level++;
+                } else {
+                    break;
+                }
+            }
+
+            // 提取标题内容
+            const content = trimmedLine.substring(level).trim();
+            if (content) {
+                nodes.push({ level, content, id: `node_${nodes.length}`, lineNumber });
+                lineNodeMap[lineNumber] = content; // 记录行号对应的节点内容
+            }
+        }
+    }
+
+    // 如果没有解析到任何节点，使用主题作为根节点
+    if (nodes.length === 0) {
+        console.warn('没有从Markdown中解析到任何标题节点，将尝试使用整个内容作为节点');
+        const rootContent = themeInput.value || '思维导图';
+        nodes.push({ level: 1, content: rootContent, id: 'node_0', lineNumber: 1 });
+        lineNodeMap[1] = rootContent;
+
+        // 简单地将每个非空行作为二级节点
+        let index = 1;
+        for (let i = 0; i < lines.length; i++) {
+            const lineNumber = i + 1;
+            const trimmedLine = lines[i].trim();
+            if (trimmedLine && !trimmedLine.startsWith('#')) {
+                nodes.push({ level: 2, content: trimmedLine, id: `node_${index}`, lineNumber });
+                lineNodeMap[lineNumber] = trimmedLine;
+                index++;
+            }
+        }
+    }
+
+    // 构建完整的父子关系树
+    const nodeTree = buildNodeTree(nodes);
+
+    return { nodes: nodeTree, lineNodeMap };
+}
+
+// 构建完整的父子关系树
+function buildNodeTree(nodes) {
+    if (nodes.length === 0) return [];
+    
+    // 创建根节点数组（可能有多个并行的根节点）
+    const rootNodes = nodes.filter(node => node.level === 1);
+    
+    // 为每个根节点构建子树
+    for (const rootNode of rootNodes) {
+        buildNodeSubTree(rootNode, nodes);
+    }
+    
+    return nodes;
+}
+
+// 递归构建节点子树
+function buildNodeSubTree(parentNode, allNodes) {
+    // 查找所有直接子节点（级别比父节点大1的节点）
+    parentNode.children = []; // 确保有一个空的子节点数组
+    
+    let nextSiblingIndex = -1;
+    
+    // 找到当前节点在数组中的索引
+    const parentIndex = allNodes.findIndex(node => node.id === parentNode.id);
+    
+    // 从下一个节点开始查找
+    for (let i = parentIndex + 1; i < allNodes.length; i++) {
+        const currentNode = allNodes[i];
+        
+        // 如果找到了同级或更高级的节点，说明父节点的范围结束了
+        if (currentNode.level <= parentNode.level) {
+            nextSiblingIndex = i;
+            break;
+        }
+        
+        // 如果是直接子节点（级别比父节点大1），添加到子节点列表
+        if (currentNode.level === parentNode.level + 1) {
+            parentNode.children.push(currentNode);
+            currentNode.parent = parentNode;
+        }
+    }
+    
+    // 递归处理所有子节点
+    for (const child of parentNode.children) {
+        buildNodeSubTree(child, allNodes);
+    }
+}
+
+// 生成支持多层级的Mermaid图表代码
+function generateMultiLevelMermaidDiagram(nodes) {
+    if (!nodes || nodes.length === 0) {
+        return 'graph LR\n    Root[没有找到节点]';
+    }
+
+    try {
+        // 查找顶级节点（不应该有父节点）和所有一级节点
+        const rootNodes = nodes.filter(node => node.level === 1);
+        if (rootNodes.length === 0) return 'graph LR\n    Root[没有找到根节点]';
+        
+        // 获取根节点
+        const rootNode = rootNodes[0];
+        
+        // 获取所有二级节点（主要分支）
+        const mainBranches = nodes.filter(node => node.level === 2);
+        if (mainBranches.length === 0) {
+            // 如果没有二级节点，返回只包含根节点的图
+            return `graph LR\n    Center[${escapeMermaidText(rootNode.content)}]`;
+        }
+        
+        let mermaidCode = 'graph LR\n';
+        mermaidCode += `    %% 中心节点\n`;
+        mermaidCode += `    Center[${escapeMermaidText(rootNode.content)}]\n\n`;
+        
+        // 平均分配节点到左侧和右侧
+        const leftBranchCount = Math.floor(mainBranches.length / 2);
+        const rightBranchCount = mainBranches.length - leftBranchCount;
+        
+        // 生成左侧分支及其所有子分支
+        if (leftBranchCount > 0) {
+            mermaidCode += '    %% 左侧分支\n';
+            for (let i = 0; i < leftBranchCount; i++) {
+                const branch = mainBranches[i];
+                const nodeId = `Section${i + 1}`;
+                mermaidCode += `    ${nodeId}[${escapeMermaidText(branch.content)}] --- Center\n`;
+                
+                // 递归处理所有子节点，支持无限嵌套
+                if (branch.children && branch.children.length > 0) {
+                    mermaidCode += generateNestedNodesRecursive(branch, nodeId, true, 1);
+                }
+            }
+            mermaidCode += '\n';
+        }
+        
+        // 生成右侧分支及其所有子分支
+        if (rightBranchCount > 0) {
+            mermaidCode += '    %% 右侧分支\n';
+            for (let i = 0; i < rightBranchCount; i++) {
+                const branch = mainBranches[i + leftBranchCount];
+                const nodeId = `Section${i + leftBranchCount + 1}`;
+                mermaidCode += `    Center --- ${nodeId}[${escapeMermaidText(branch.content)}]\n`;
+                
+                // 递归处理所有子节点，支持无限嵌套
+                if (branch.children && branch.children.length > 0) {
+                    mermaidCode += generateNestedNodesRecursive(branch, nodeId, false, 1);
+                }
+            }
+        }
+        
+        return mermaidCode;
+    } catch (error) {
+        console.error('生成多级Mermaid图错误:', error);
+        return `graph LR\n    Center["生成失败: ${error.message}"]`;
+    }
+}
+
+// 递归生成嵌套的Mermaid节点 - 支持无限深度
+function generateNestedNodesRecursive(parentNode, parentId, isLeftSide, depth) {
+    let code = '';
+    const indent = '    '; // 基本缩进
+    
+    // 处理每个子节点
+    parentNode.children.forEach((child, index) => {
+        const childId = `${parentId}_${index + 1}`;
+        
+        // 根据方向添加连接线
+        if (isLeftSide) {
+            code += `${indent}${childId}[${escapeMermaidText(child.content)}] --- ${parentId}\n`;
+        } else {
+            code += `${indent}${parentId} --- ${childId}[${escapeMermaidText(child.content)}]\n`;
+        }
+        
+        // 递归处理子节点的子节点
+        if (child.children && child.children.length > 0) {
+            code += generateNestedNodesRecursive(child, childId, isLeftSide, depth + 1);
+        }
+    });
+    
+    return code;
+}
+
+// 生成完整多层次的文件树HTML
+function generateFileTree(nodes) {
+    if (!nodes || nodes.length === 0) {
+        return '<div class="alert alert-warning">没有找到节点数据</div>';
+    }
+
+    try {
+        // 找到所有顶级节点（第一级标题）
+        const rootNodes = nodes.filter(node => node.level === 1);
+        if (rootNodes.length === 0) {
+            return '<div class="alert alert-warning">没有找到根节点</div>';
+        }
+        
+        let html = '<ul class="file-tree-root">\n';
+        
+        // 为每个根节点生成文件树
+        for (const rootNode of rootNodes) {
+            html += generateFileTreeNodeHTML(rootNode, 1);
+        }
+        
+        html += '</ul>';
+        
+        return html;
+    } catch (error) {
+        console.error('生成文件树错误:', error);
+        return `<div class="alert alert-danger">生成文件树失败: ${error.message}</div>`;
+    }
+}
+
+// 递归生成文件树节点HTML
+function generateFileTreeNodeHTML(node, depth) {
+    const indent = ' '.repeat(depth * 2);
+    let html = `${indent}<li>\n`;
+    
+    // 根据是否有子节点决定是文件夹还是文件
+    const hasChildren = node.children && node.children.length > 0;
+    const nodeClass = hasChildren ? 'folder' : 'file';
+    
+    html += `${indent}  <span class="${nodeClass}" data-line="${node.lineNumber}">${escapeHtml(node.content)}</span>\n`;
+    
+    // 如果有子节点，递归生成子树
+    if (hasChildren) {
+        html += `${indent}  <ul>\n`;
+        
+        for (const child of node.children) {
+            html += generateFileTreeNodeHTML(child, depth + 1);
+        }
+        
+        html += `${indent}  </ul>\n`;
+    }
+    
+    html += `${indent}</li>\n`;
+    
+    return html;
+}
+
+// 渲染文件树并添加交互事件
+function renderFileTree() {
+    if (!fileTreeContent) return; // 确保元素存在
+    
+    if (!generatedData.fileTree) {
+        generatedData.fileTree = generateFileTree(generatedData.nodes);
+    }
+
+    fileTreeContent.innerHTML = generatedData.fileTree;
+    
+    // 添加文件树节点点击事件，跳转到对应的行
+    const treeNodes = fileTreeContent.querySelectorAll('.folder, .file');
+    treeNodes.forEach(node => {
+        node.addEventListener('click', function() {
+            const lineNumber = parseInt(this.getAttribute('data-line'));
+            if (lineNumber && mdEditor) {
+                // 跳转到特定行并将其居中显示
+                mdEditor.setCursor(lineNumber - 1);
+                mdEditor.focus();
+                
+                // 高亮对应的行
+                const endCh = mdEditor.getLine(lineNumber - 1).length;
+                mdEditor.markText(
+                    {line: lineNumber - 1, ch: 0}, 
+                    {line: lineNumber - 1, ch: endCh}, 
+                    {className: 'highlight-animation'}
+                );
+                
+                // 一秒后清除高亮
+                setTimeout(() => {
+                    mdEditor.getAllMarks().forEach(mark => mark.clear());
+                }, 1000);
+            }
+        });
+    });
+}
+
+// 转义Mermaid文本中的特殊字符
+function escapeMermaidText(text) {
+    return text
+        .replace(/"/g, "'")
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')        
+	.replace(/\(/g, '&#40;')
+        .replace(/\)/g, '&#41;');
+}
+
+// 转义HTML
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// 下载文件
+function downloadFile(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// 复制文本到剪贴板
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch (err) {
+        console.error('复制失败:', err);
+        return false;
+    }
+}
+
+// 下载按钮事件处理
+downloadMdBtn.addEventListener('click', function() {
+    const markdown = mdEditor ? mdEditor.getValue() : generatedData.markdown;
+    
+    if (!markdown) {
+        showAlert('没有可下载的Markdown内容', 'danger');
+        return;
+    }
+
+    const filename = `${themeInput.value || 'mindmap'}.md`;
+    downloadFile(markdown, filename, 'text/markdown');
+    showAlert('Markdown文件已下载', 'success');
+});
+
+downloadMermaidBtn.addEventListener('click', function() {
+    const mermaid = mermaidEditor ? mermaidEditor.getValue() : generatedData.mermaid;
+    
+    if (!mermaid) {
+        showAlert('没有可下载的Mermaid内容', 'danger');
+        return;
+    }
+
+    const filename = `${themeInput.value || 'mindmap'}.mmd`;
+    downloadFile(mermaid, filename, 'text/plain');
+    showAlert('Mermaid文件已下载', 'success');
+});
+
+// 复制按钮事件处理
+copyMdBtn.addEventListener('click', async function() {
+    const markdown = mdEditor ? mdEditor.getValue() : generatedData.markdown;
+    
+    if (!markdown) {
+        showAlert('没有可复制的Markdown内容', 'danger');
+        return;
+    }
+
+    const success = await copyToClipboard(markdown);
+    showAlert(success ? 'Markdown已复制到剪贴板' : '复制失败，请手动复制', success ? 'success' : 'danger');
+});
+
+copyMermaidBtn.addEventListener('click', async function() {
+    const mermaid = mermaidEditor ? mermaidEditor.getValue() : generatedData.mermaid;
+    
+    if (!mermaid) {
+        showAlert('没有可复制的Mermaid代码', 'danger');
+        return;
+    }
+
+    const success = await copyToClipboard(mermaid);
+    showAlert(success ? 'Mermaid代码已复制到剪贴板' : '复制失败，请手动复制', success ? 'success' : 'danger');
+});
+
+// 初始化应用
+function initApp() {
+    // 初始化CodeMirror编辑器
+    initializeCodeMirrors();
+
+    // 测试是否支持剪贴板API
+    if (!navigator.clipboard) {
+        console.warn('浏览器不支持Clipboard API，复制功能可能不可用');
+    }
+
+    // 设置默认值
+    temperatureInput.value = 1.5;
+    temperatureValue.textContent = "1.5";
+    maxTokensInput.value = 4000;
+    maxTokensValue.textContent = "4000";
+
+    // 加载API设置
+    loadApiSettings();
+}
+
+// 页面加载完成后初始化应用
+window.addEventListener('load', initApp);
+</script>
+</body>
+</html>
+
